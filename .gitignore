@@ -1,0 +1,98 @@
+# Global ignores for all services
+.DS_Store
+node_modules/
+.env
+.env.local
+.env.*.local
+uploads/
+*.mp3
+*.wav
+*.mp3.mp3
+
+# Golang specific ignores
+*.exe
+*.out
+*.log
+*.test
+/vendor/
+*.mod
+*.sum
+coverage.out
+
+# Python specific ignores
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.env
+.venv/
+venv/
+pip-log.txt
+
+# Next.js specific ignores
+.next/
+build/
+*.log
+yarn-error.log
+npm-debug.log
+.pnpm-debug.log
+
+# Tailwind CSS specific ignores
+tailwind.config.js
+postcss.config.js
+*.css.map
+
+# Uploads folder specific ignores (any uploads/ folder in subdirectories)
+**/uploads/
+uploads/
+
+# Other general ignores
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*.tmp
+*.bak
+*.mp3
+*.wav
+*.mp3.mp3
+# Ignore local configurations
+*.local
+*.lock
+*.bak
+
+# Ignore Go build files
+/bin/
+/pkg/
+/*.exe
+/*.out
+
+# Dependency directories
+/vendor/
+
+# IDE/editor-specific files
+*.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.test
+
+# Ignore Go coverage files
+*.cover
+
+# Ignore specific folders
+project/db-data/
+
+# Ignore files related to modules (optional if you're using Go Modules)
+go.sum
+go.work
+
+# Ignore user-defined cache files (optional)
+*.cache

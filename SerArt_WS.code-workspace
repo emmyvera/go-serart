@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "backend-service"
+		},
+		{
+			"path": "audio-process-service"
+		},
+		{
+			"path": "listener-service"
+		},
+		{
+			"path": "logger-service"
+		},
+		{
+			"path": "project"
+		}
+	]
+}
