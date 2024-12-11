@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	WEB_PORT = "81"
-	rpcPort  = "5001"
+	WEB_PORT   = "81"
+	rpcPort    = "5001"
+	mongodbUrl = "mongodb://localhost:27017"
 )
 
 type Config struct {

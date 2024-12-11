@@ -19,13 +19,10 @@ type AudioFlie struct {
 }
 
 // isValidWav checks if a .wav file is valid using ffprobe
-func isValidWav(filePath string) (bool, error) {
+func IsValidWav(filePath string) bool {
 	cmd := exec.Command("ffprobe", "-i", filePath, "-show_streams", "-select_streams", "a", "-loglevel", "error")
 	err := cmd.Run()
-	if err != nil {
-		return false, errors.New("invalid .wav file")
-	}
-	return true, nil
+	return err == nil
 }
 
 // convertToWav converts an audio/video file to .wav using ffmpeg
@@ -76,7 +73,7 @@ type Metadata struct {
 }
 
 // getTotalDuration retrieves the total duration of an audio file in seconds
-func getTotalDuration(inputFile string) (int, error) {
+func GetTotalDuration(inputFile string) (int, error) {
 	cmd := exec.Command("ffprobe", "-i", inputFile, "-show_streams", "-select_streams", "a", "-print_format", "json", "-loglevel", "error")
 
 	var out bytes.Buffer
@@ -115,7 +112,7 @@ type ChunkResult struct {
 }
 
 // Worker function to process audio chunks
-func processChunk(inputFile string, startTime int, duration int, outputDir string, order int, results chan<- ChunkResult, wg *sync.WaitGroup) {
+func ProcessChunk(inputFile string, startTime int, duration int, outputDir string, order int, results chan<- ChunkResult, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	outputFile := filepath.Join(outputDir, fmt.Sprintf("chunk_%03d.wav", order))
@@ -128,4 +125,33 @@ func processChunk(inputFile string, startTime int, duration int, outputDir strin
 	}
 
 	results <- ChunkResult{Order: order, Path: outputFile, Err: nil}
+}
+
+func SpeechToText(audioFile string) (string, error) {
+	// Check if the file exists
+	if _, err := os.Stat(audioFile); os.IsNotExist(err) {
+		fmt.Println("Audio file does not exist:", audioFile)
+		return "", err
+	}
+
+	// Path to the Python script
+	pythonScript := "whisper_transcribe.py"
+
+	// Execute the Python script
+	cmd := exec.Command("python", pythonScript, audioFile)
+
+	// Capture the script's output
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error:", err)
+		fmt.Println("Stderr:", stderr.String())
+		return "", err
+	}
+
+	return out.String(), nil
 }
