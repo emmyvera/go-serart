@@ -125,6 +125,7 @@ func processAudio(audio Payload) error {
 	if err != nil {
 		return err
 	}
+	log.Println(result)
 
 	return nil
 }

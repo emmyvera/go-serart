@@ -38,12 +38,12 @@ func (r *mongoRepository) AllAudio() ([]*Audio, error) {
 
 // UpdateAudioByName updates the audio document identified by its name
 func (r *mongoRepository) UpdateAudioByName(name, text string) (*Audio, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Second)
 	defer cancel()
 
 	// Find the audio document by name
 	var audio Audio
-	err := r.Collection.FindOne(ctx, bson.M{"name": name}).Decode(&audio)
+	err := r.Collection.FindOne(ctx, bson.M{"audio_name": name}).Decode(&audio)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, errors.New("document does not exist") // No document found with the specified name
@@ -58,7 +58,7 @@ func (r *mongoRepository) UpdateAudioByName(name, text string) (*Audio, error) {
 	// Define the update query
 	update := bson.M{
 		"$set": bson.M{
-			"text":       text,
+			"audio_text": text,
 			"updated_at": audio.UpdatedAt,
 		},
 	}
@@ -66,7 +66,7 @@ func (r *mongoRepository) UpdateAudioByName(name, text string) (*Audio, error) {
 	// Perform the update
 	result := r.Collection.FindOneAndUpdate(
 		ctx,
-		bson.M{"name": name},
+		bson.M{"audio_name": name},
 		update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After), // Return the updated document
 	)

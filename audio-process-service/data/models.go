@@ -1,6 +1,7 @@
 package data
 
 import (
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,10 +14,10 @@ type Models struct {
 }
 
 type Audio struct {
-	ID        int       `bson:"_id,omitempty" json:"id,omitempty"`
+	ID        string    `bson:"_id,omitempty" json:"id,omitempty"`
 	Name      string    `bson:"name" json:"name"`
 	URL       string    `bson:"url" json:"url"`
-	Text      string    `bson:"text,omitempty" json:"text,omitempty"`
+	AudioText string    `bson:"audio_text," json:"audio_text"`
 	AudioName string    `bson:"audio_name" json:"audio_name"`
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updated_at"`
@@ -26,6 +27,7 @@ func New(client *mongo.Client) *Models {
 	if client != nil {
 		collection := client.Database("serart").Collection("audio")
 		repo = newMongoRepository(collection)
+		log.Println("Client not null")
 	}
 
 	return &Models{

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"audio_process/configuration"
 	"fmt"
 	"log"
 	"net"
@@ -9,12 +10,12 @@ import (
 )
 
 const (
-	WEB_PORT   = "81"
-	rpcPort    = "5001"
-	mongodbUrl = "mongodb://localhost:27017"
+	WEB_PORT = "81"
+	rpcPort  = "5001"
 )
 
 type Config struct {
+	App configuration.Application
 }
 
 func main() {

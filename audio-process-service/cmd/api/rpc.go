@@ -2,17 +2,27 @@ package main
 
 import (
 	"audio_process/audio"
+	"audio_process/configuration"
+	"context"
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
-type RPCServer struct{}
+const (
+	mongodbUrl = "mongodb://localhost:27017"
+)
+
+type RPCServer struct {
+	App *configuration.Application
+}
 
 type RPCPayload struct {
 	Filename string `json:"filename"`
@@ -29,7 +39,8 @@ func (r *RPCServer) SaveAudio(payload RPCPayload, resp *string) error {
 	}
 
 	// Save the audio to disk
-	err = os.WriteFile("./uploads/"+payload.Filename, audioData, 0644)
+	audioPath := "./uploads/" + payload.Filename
+	err = os.WriteFile(audioPath, audioData, 0644)
 	if err != nil {
 		log.Println("error saving to disk", err)
 		return err
@@ -37,18 +48,20 @@ func (r *RPCServer) SaveAudio(payload RPCPayload, resp *string) error {
 
 	*resp = "Processed payload via RPC: " + payload.Filename
 
+	r.ProcessAudio(audioPath, payload.Filename)
+
 	return nil
 
 }
 
-func ProcessAudio(filePath, fileName string) {
+func (r *RPCServer) ProcessAudio(filePath, filename string) {
 	err := audio.ValidateFile(filePath)
 	if err != nil {
 		return
 	}
 
 	if !audio.IsValidWav(filePath) {
-		filePath, err := audio.EncodeAudioToWav(fileName, "/uploads")
+		filePath, err := audio.EncodeAudioToWav(filePath, "/uploads")
 		SplitAudio(filePath)
 		if err != nil {
 			return
@@ -57,10 +70,35 @@ func ProcessAudio(filePath, fileName string) {
 		SplitAudio(filePath)
 	}
 
+	client, err := initMongoDB(mongodbUrl)
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+	r.App = configuration.New(client)
+
+	audioText := GetTextFromAudio()
+	log.Println(filename, audioText)
+	audio, err := r.App.Models.Audio.UpdateAudioByName(filename, audioText)
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+	// create a context in order to disconnect
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	// close connection
+	defer func() {
+		if err = client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
+
+	log.Println(audio)
+
 }
 
 func SplitAudio(inputFile string) {
-	//inputFile := "example.wav" // Replace with your WAV file path
 	outputDir := "chunks" // Directory to store audio chunks
 
 	// Create output directory if it doesn't exist
@@ -124,12 +162,13 @@ func SplitAudio(inputFile string) {
 	for _, chunk := range chunks {
 		fmt.Printf("Chunk %d: %s\n", chunk.Order, chunk.Path)
 	}
+
 }
 
-func SaveTextToDB(name string) {
+func GetTextFromAudio() string {
 	var audiosPath []string
 
-	err := filepath.Walk("./uploads/chunk", func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk("./chunks", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -151,13 +190,35 @@ func SaveTextToDB(name string) {
 
 		text, err := audio.SpeechToText(audioFile)
 		if err != nil {
-			return
+			return ""
 		}
 
 		builder.WriteString(text)
 
 	}
+	audioText := builder.String()
+	DeleteFilesInFolder("./chunks")
+	return audioText
 
-	//audioText := builder.String()
+}
 
+// DeleteFilesInFolder deletes all files in the specified folder path
+func DeleteFilesInFolder(folderPath string) error {
+	// Read all files in the directory
+	files, err := ioutil.ReadDir(folderPath)
+	if err != nil {
+		return fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	// Iterate through the files and delete each one
+	for _, file := range files {
+		if !file.IsDir() { // Ensure it is a file, not a directory
+			filePath := folderPath + string(os.PathSeparator) + file.Name()
+			if err := os.Remove(filePath); err != nil {
+				return fmt.Errorf("failed to delete file %s: %w", filePath, err)
+			}
+		}
+	}
+
+	return nil
 }
