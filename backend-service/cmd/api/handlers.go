@@ -39,10 +39,10 @@ type RMQPayload struct {
 }
 
 type Audio struct {
-	ID        int       `bson:"_id,omitempty" json:"id,omitempty"`
+	ID        string    `bson:"_id,omitempty" json:"id,omitempty"`
 	Name      string    `bson:"name" json:"name"`
 	URL       string    `bson:"url" json:"url"`
-	Text      string    `bson:"text,omitempty" json:"text,omitempty"`
+	AudioText string    `bson:"audio_text" json:"audio_text"`
 	AudioName string    `bson:"audio_name" json:"audio_name"`
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updated_at"`
@@ -56,6 +56,17 @@ func (app *Config) Greet(w http.ResponseWriter, r *http.Request) {
 	payload.Message = "Hello World"
 
 	t.WriteJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) AllAudio(w http.ResponseWriter, r *http.Request) {
+	var t toolbox.Tools
+
+	audios, err := app.App.Models.Audio.AllAudio()
+	if err != nil {
+		t.ErrorJSON(w, err)
+	}
+
+	t.WriteJSON(w, http.StatusAccepted, audios)
 }
 
 func (app *Config) Audio(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +149,7 @@ func (app *Config) SendAudio(w http.ResponseWriter, r *http.Request) {
 	audio := Audio{
 		Name:      name,
 		URL:       uniqueFilename, // TODO change to cloudinary url
-		Text:      r.FormValue("text"),
+		AudioText: "Unprocessed",
 		AudioName: uniqueFilename,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

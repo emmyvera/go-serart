@@ -25,6 +25,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/", app.Greet)
 	mux.Post("/audio", app.Audio)
 	mux.Post("/send_audio", app.SendAudio)
+	mux.Get("/all_audio", app.AllAudio)
 
 	return mux
 }
