@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
@@ -40,6 +41,17 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	// create a context in order to disconnect
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// close connection
+	defer func() {
+		if err = client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
 
 	app.App = configuration.New(client)
 

@@ -38,7 +38,7 @@ func (r *mongoRepository) AllAudio() ([]*Audio, error) {
 
 // UpdateAudioByName updates the audio document identified by its name
 func (r *mongoRepository) UpdateAudioByName(name, text string) (*Audio, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	// Find the audio document by name
