@@ -2,7 +2,7 @@ package main
 
 import (
 	"audio_process/audio"
-	"audio_process/configuration"
+	"audio_process/data"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -21,7 +21,8 @@ const (
 )
 
 type RPCServer struct {
-	App *configuration.Application
+	// App  *configuration.Application
+	Repo *data.Models
 }
 
 type RPCPayload struct {
@@ -62,12 +63,12 @@ func (r *RPCServer) ProcessAudio(filePath, filename string) {
 
 	if !audio.IsValidWav(filePath) {
 		filePath, err := audio.EncodeAudioToWav(filePath, "/uploads")
-		SplitAudio(filePath)
+		SplitAudio(filePath, filename)
 		if err != nil {
 			return
 		}
 	} else {
-		SplitAudio(filePath)
+		SplitAudio(filePath, filename)
 	}
 
 	client, err := initMongoDB(mongodbUrl)
@@ -75,11 +76,12 @@ func (r *RPCServer) ProcessAudio(filePath, filename string) {
 		log.Panic(err)
 		return
 	}
-	r.App = configuration.New(client)
+	//r.App = configuration.New(client)
+	r.Repo = data.New(client)
 
-	audioText := GetTextFromAudio()
+	audioText := GetTextFromAudio(filename)
 	log.Println(filename, audioText)
-	audio, err := r.App.Models.Audio.UpdateAudioByName(filename, audioText)
+	audio, err := r.Repo.Audio.UpdateAudioByName(filename, audioText)
 	if err != nil {
 		log.Panic(err)
 		return
@@ -98,8 +100,12 @@ func (r *RPCServer) ProcessAudio(filePath, filename string) {
 
 }
 
-func SplitAudio(inputFile string) {
-	outputDir := "chunks" // Directory to store audio chunks
+func SplitAudio(inputFile, filename string) {
+	// Split by "." and take the first part
+	parts := strings.Split(filename, ".")
+	folderName := parts[0]
+
+	outputDir := "chunks/" + folderName // Directory to store audio chunks
 
 	// Create output directory if it doesn't exist
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
@@ -165,10 +171,15 @@ func SplitAudio(inputFile string) {
 
 }
 
-func GetTextFromAudio() string {
+func GetTextFromAudio(filename string) string {
+	// Split by "." and take the first part
+	parts := strings.Split(filename, ".")
+	folderName := parts[0]
+	outputDir := "./chunks/" + folderName // Directory to store audio chunks
+
 	var audiosPath []string
 
-	err := filepath.Walk("./chunks", func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(outputDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -197,7 +208,8 @@ func GetTextFromAudio() string {
 
 	}
 	audioText := builder.String()
-	DeleteFilesInFolder("./chunks")
+	time.Sleep(60 * time.Second)
+	DeleteFilesInFolder(outputDir)
 	return audioText
 
 }
